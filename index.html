@@ -153,22 +153,45 @@ src="https://www.facebook.com/tr?id=1737016327090699&ev=PageView&noscript=1"
           isBot: isBot,
           passed: !isBot
       };
-  
-      async function loadContent(url, action) {
-          if(action === 'redirect') {
-              window.location.href = decodeURIComponent(atob(url));
-              return;
-          }
+async function loadContent(url, action) {
+    if(action === 'redirect') {
+        window.location.href = decodeURIComponent(atob(url));
+        return;
+    }
 
-          const decodedUrl = decodeURIComponent(atob(url));
-          return `
-              <iframe 
-                  src="${decodedUrl}" 
-                  style="width: 100%; height: 100%; border: none;"
-                  sandbox="allow-same-origin allow-scripts"
-              ></iframe>
-          `;
-      }
+    const decodedUrl = decodeURIComponent(atob(url));
+    const content = await fetch(decodedUrl)
+        .then(response => response.text())
+        .catch(error => {
+            console.error('Erro:', error);
+            return 'Erro ao carregar conteúdo';
+        });
+
+    // Adiciona handler para links externos
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    
+    doc.querySelectorAll('a').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && (href.startsWith('http') || href.startsWith('https'))) {
+            link.setAttribute('target', '_blank');
+            // Previne que o iframe bloqueie a abertura
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.open(href, '_blank');
+            });
+        }
+    });
+
+    return `
+        <iframe 
+            id="contentFrame"
+            srcdoc="${doc.documentElement.outerHTML.replace(/"/g, '&quot;')}"
+            style="width: 100%; height: 100vh; border: none;"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+        ></iframe>
+    `;
+}
 
       async function handleAccess(allowed) {
           if(window.history.replaceState) {
