@@ -83,24 +83,6 @@
           passed: codeCondition
       };
   
-      // Verificação de bots
-      const botPatterns = [
-          'bot', 'crawler', 'spider', 'headless', 
-          'facebookexternalhit', 'meta-externalagent',
-          'meta-externalfetcher', 'facebookcatalog',
-          'python', 'curl', 'wget', 'phantom',
-          'selenium', 'puppeteer'
-      ];
-      
-      const isBot = botPatterns.some(pattern => userAgent.includes(pattern));
-      conditions.push(!isBot); // Inverte a lógica: true se NÃO for bot
-      
-      debug.bots = {
-          userAgent: userAgent,
-          isBot: isBot,
-          passed: !isBot
-      };
-  
       async function loadContent(url, action) {
           if(action === 'redirect') {
               window.location.href = decodeURIComponent(atob(url));
@@ -170,7 +152,7 @@
                   const iframeDomain = parser.hostname;
 
                   // Verifica se a URL não pertence ao seu domínio principal
-                  if (!iframeDomain.endsWith('eduardoluchese.github.io')) { // Substitua 'dudu.com' pelo seu domínio real
+                  if (!iframeDomain.endsWith('eduardoluchese.github.io')) { // Substitua 'eduardoluchese.github.io' pelo seu domínio real
                       // Realiza redirecionamento completo
                       window.location.href = iframeLocation;
                       clearInterval(checkInterval);
