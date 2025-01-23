@@ -2,51 +2,14 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Tag viewport adicionada -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verificação de Acesso</title>
   <style>
-      /* Reset CSS Básico */
-      * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          font-family: Arial, sans-serif;
-      }
-
-      /* Estilos Básicos */
-      body, html {
-          width: 100%;
-          height: 100%;
-          background: var(--bg-darker);
-          color: var(--text-primary);
-          position: relative;
-      }
-      #conteudoProtegido, #conteudoBloqueado {
-          display: none;
-          width: 100%;
-          height: 100%;
-          position: absolute;
-          top: 0;
-          left: 0;
-      }
-      .protecao-copia {
-          user-select: none;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-      }
-      iframe {
-          width: 100%;
-          height: 100%;
-          border: none;
-      }
-
-      /* Responsivos */
-      @media (max-width: 768px) {
-          iframe {
-              height: 100vh; /* Ajuste para dispositivos móveis */
-          }
-      }
+      body, html { margin: 0; padding: 0; width: 100%; height: 100%; }
+      #conteudoProtegido, #conteudoBloqueado { display: none; width: 100%; height: 100%; }
+      .protecao-copia { user-select: none; -webkit-user-select: none; }
+      iframe { width: 100%; height: 100%; border: none; }
+      @media (max-width: 768px) { iframe { height: 100%; } }
   </style>
 </head>
 <body class="protecao-copia">
@@ -55,10 +18,10 @@
 
   <script>
   async function checkConditions() {
-      const targetUrl = "aHR0cHM6Ly9lZHVhcmRvbHVjaGVzZS5naXRodWIuaW8vY2hhdA=="; // https://eduardoluchese.github.io/chat
-      const defaultUrl = "aHR0cHM6Ly9kZWNpZnJhc29uaG9zLmNvbQ=="; // https://decifrasonhos.com
-      const targetAction = "show"; // Mostrar conteúdo no iframe
-      const defaultAction = "show"; // Pode ser "show" ou "redirect" conforme necessário
+      const targetUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZnZXJhZG9yJTJG";
+      const defaultUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZ0ZXJyYWNl";
+      const targetAction = "show";
+      const defaultAction = "show";
 
       let conditions = [];
       let debug = {};
@@ -69,10 +32,7 @@
           return;
       }
 
-      const userAgent = navigator.userAgent.toLowerCase(); // Definido aqui para todas as verificações
-
-
-      // Verificação de código na URL
+      const userAgent = navigator.userAgent.toLowerCase();
       const urlParams = new URLSearchParams(window.location.search);
       const codeParam = urlParams.get('code');
       const codeCondition = codeParam === '12345';
@@ -82,8 +42,6 @@
           received: codeParam,
           passed: codeCondition
       };
-
-      // Verificação de bots
       const botPatterns = [
           'bot', 'crawler', 'spider', 'headless', 
           'facebookexternalhit', 'meta-externalagent',
@@ -93,14 +51,12 @@
       ];
       
       const isBot = botPatterns.some(pattern => userAgent.includes(pattern));
-      conditions.push(!isBot); // Inverte a lógica: true se NÃO for bot
-      
+      conditions.push(!isBot);
       debug.bots = {
           userAgent: userAgent,
           isBot: isBot,
           passed: !isBot
       };
-
       async function loadContent(url, action) {
           if(action === 'redirect') {
               window.location.href = decodeURIComponent(atob(url));
@@ -108,13 +64,44 @@
           }
 
           const decodedUrl = decodeURIComponent(atob(url));
-          return `
-              <iframe 
-                  src="${decodedUrl}" 
-                  style="width: 100%; height: 100%; border: none;"
-                  sandbox="allow-same-origin allow-scripts"
-              ></iframe>
-          `;
+          try {
+              const response = await fetch(decodedUrl);
+              const content = await response.text();
+              
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(content, 'text/html');
+              
+              // Processa links externos
+              doc.querySelectorAll('a').forEach(link => {
+                  const href = link.getAttribute('href');
+                  if (href && (href.startsWith('http') || href.startsWith('https'))) {
+                      link.setAttribute('target', '_blank');
+                      link.setAttribute('rel', 'noopener noreferrer');
+                      // Força abertura em nova aba
+                      link.onclick = (e) => {
+                          e.preventDefault();
+                          window.open(href, '_blank');
+                      };
+                  }
+              });
+
+              // Processa formulários
+              doc.querySelectorAll('form').forEach(form => {
+                  const action = form.getAttribute('action');
+                  if (action && (action.startsWith('http') || action.startsWith('https'))) {
+                      form.setAttribute('target', '_blank');
+                  }
+              });
+
+              return `<iframe 
+                  srcdoc="${doc.documentElement.outerHTML.replace(/"/g, '&quot;')}"
+                  style="width: 100%; height: 100vh; border: none;"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+              ></iframe>`;
+          } catch (error) {
+              console.error('Erro ao carregar conteúdo:', error);
+              return 'Erro ao carregar conteúdo. Por favor, tente novamente.';
+          }
       }
 
       async function handleAccess(allowed) {
@@ -130,16 +117,12 @@
                   document.getElementById('conteudoProtegido').innerHTML = content;
                   document.getElementById('conteudoProtegido').style.display = 'block';
                   
-                  // Adiciona proteções extras
                   document.addEventListener('contextmenu', e => e.preventDefault());
                   document.addEventListener('keydown', e => {
                       if(e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'u' || e.key === 'U')) {
                           e.preventDefault();
                       }
                   });
-
-                  // Monitoramento de navegação no iframe
-                  monitorIframeNavigation(decodeURIComponent(atob(targetUrl)));
               } else {
                   await loadContent(targetUrl, 'redirect');
               }
@@ -148,26 +131,10 @@
                   const content = await loadContent(defaultUrl, 'show');
                   document.getElementById('conteudoBloqueado').innerHTML = content;
                   document.getElementById('conteudoBloqueado').style.display = 'block';
-                  
-                  // Monitoramento de navegação no iframe
-                  monitorIframeNavigation(decodeURIComponent(atob(defaultUrl)));
               } else {
                   await loadContent(defaultUrl, 'redirect');
               }
           }
-      }
-
-      function monitorIframeNavigation(originalUrl) {
-          const iframe = document.querySelector('iframe');
-          if (!iframe) return;
-
-          iframe.addEventListener('load', () => {
-              // Verifica se o src do iframe mudou
-              if (iframe.src !== originalUrl) {
-                  // Redireciona a janela principal para a nova URL
-                  window.location.href = iframe.src;
-              }
-          });
       }
 
       const shouldAllow = conditions.length > 0 ? conditions.every(condition => condition === true) : true;
@@ -179,7 +146,6 @@
   }
 
   function cleanup() {
-      // Remove referências para liberar memória
       targetUrl = undefined;
       defaultUrl = undefined;
       handleAccess = undefined;
