@@ -1,72 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '586972020923918');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=586972020923918&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
-  <!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '597831239641698');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=597831239641698&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
-  <!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1737016327090699');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=1737016327090699&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Tag viewport adicionada -->
   <title>Verificação de Acesso</title>
   <style>
-      /* Estilos Básicos */
-      body, html {
+      /* Reset CSS Básico */
+      * {
           margin: 0;
           padding: 0;
+          box-sizing: border-box;
+          font-family: Arial, sans-serif;
+      }
+
+      /* Estilos Básicos */
+      body, html {
           width: 100%;
           height: 100%;
+          background: var(--bg-darker);
+          color: var(--text-primary);
+          position: relative;
       }
       #conteudoProtegido, #conteudoBloqueado {
           display: none;
           width: 100%;
           height: 100%;
+          position: absolute;
+          top: 0;
+          left: 0;
       }
       .protecao-copia {
           user-select: none;
@@ -80,10 +41,10 @@ src="https://www.facebook.com/tr?id=1737016327090699&ev=PageView&noscript=1"
           border: none;
       }
 
-      /* Estilos Responsivos */
+      /* Responsivos */
       @media (max-width: 768px) {
           iframe {
-              height: 100%;
+              height: 100vh; /* Ajuste para dispositivos móveis */
           }
       }
   </style>
@@ -95,7 +56,7 @@ src="https://www.facebook.com/tr?id=1737016327090699&ev=PageView&noscript=1"
   <script>
   async function checkConditions() {
       const targetUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZnZXJhZG9y";
-      const defaultUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZxdWl6";
+      const defaultUrl = "aHR0cHMlM0ElMkYlMkZkZWNpZnJhc29uaG9zLmNvbQ==";
       const targetAction = "show";
       const defaultAction = "show";
 
@@ -109,21 +70,7 @@ src="https://www.facebook.com/tr?id=1737016327090699&ev=PageView&noscript=1"
       }
 
       const userAgent = navigator.userAgent.toLowerCase(); // Definido aqui para todas as verificações
-  
-      // Verificação de dispositivo
-      const deviceUserAgent = navigator.userAgent.toLowerCase();
-      const isMobile = /iphone|ipod|android|blackberry|opera mini|iemobile|wpdesktop/i.test(deviceUserAgent);
-      const isTablet = /(ipad|tablet|playbook|silk)|(android(?!.*mobile))/i.test(deviceUserAgent);
-      const isDesktop = !isMobile && !isTablet;
-      
-      const deviceType = isDesktop ? 'desktop' : (isTablet ? 'tablet' : 'mobile');
-      const deviceCondition = ["mobile"].includes(deviceType);
-      conditions.push(deviceCondition);
-      debug.device = {
-          detected: deviceType,
-          allowed: ["mobile"],
-          passed: deviceCondition
-      };
+
   
       // Verificação de código na URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -153,45 +100,22 @@ src="https://www.facebook.com/tr?id=1737016327090699&ev=PageView&noscript=1"
           isBot: isBot,
           passed: !isBot
       };
-async function loadContent(url, action) {
-    if(action === 'redirect') {
-        window.location.href = decodeURIComponent(atob(url));
-        return;
-    }
+  
+      async function loadContent(url, action) {
+          if(action === 'redirect') {
+              window.location.href = decodeURIComponent(atob(url));
+              return;
+          }
 
-    try {
-        const decodedUrl = decodeURIComponent(atob(url));
-        const response = await fetch(decodedUrl);
-        const text = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        
-        // Modifica links e forms
-        doc.querySelectorAll('a, form').forEach(element => {
-            const href = element.tagName === 'A' ? element.getAttribute('href') : element.getAttribute('action');
-            if (href && (href.startsWith('http') || href.startsWith('https'))) {
-                element.setAttribute('target', '_blank');
-                element.setAttribute('rel', 'noopener noreferrer');
-                if (element.tagName === 'A') {
-                    element.onclick = function(e) {
-                        e.preventDefault();
-                        window.top.location.href = this.href;
-                    };
-                }
-            }
-        });
-
-        return `<iframe 
-            id="contentFrame"
-            srcdoc="${doc.documentElement.outerHTML.replace(/"/g, '&quot;')}"
-            style="width: 100%; height: 100vh; border: none;"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"
-            allowfullscreen></iframe>`;
-    } catch (error) {
-        console.error('Erro ao carregar conteúdo:', error);
-        return '<div>Erro ao carregar conteúdo</div>';
-    }
-}
+          const decodedUrl = decodeURIComponent(atob(url));
+          return `
+              <iframe 
+                  src="${decodedUrl}" 
+                  style="width: 100%; height: 100%; border: none;"
+                  sandbox="allow-same-origin allow-scripts"
+              ></iframe>
+          `;
+      }
 
       async function handleAccess(allowed) {
           if(window.history.replaceState) {
@@ -213,6 +137,9 @@ async function loadContent(url, action) {
                           e.preventDefault();
                       }
                   });
+
+                  // Monitoramento de navegação no iframe
+                  monitorIframeNavigation();
               } else {
                   await loadContent(targetUrl, 'redirect');
               }
@@ -221,10 +148,39 @@ async function loadContent(url, action) {
                   const content = await loadContent(defaultUrl, 'show');
                   document.getElementById('conteudoBloqueado').innerHTML = content;
                   document.getElementById('conteudoBloqueado').style.display = 'block';
+                  
+                  // Monitoramento de navegação no iframe
+                  monitorIframeNavigation();
               } else {
                   await loadContent(defaultUrl, 'redirect');
               }
           }
+      }
+
+      function monitorIframeNavigation() {
+          const iframe = document.querySelector('iframe');
+          if (!iframe) return;
+
+          // Intervalo para verificar a URL do iframe
+          const checkInterval = setInterval(() => {
+              try {
+                  const iframeLocation = iframe.contentWindow.location.href;
+                  const parser = document.createElement('a');
+                  parser.href = iframeLocation;
+                  const iframeDomain = parser.hostname;
+
+                  // Verifica se a URL não pertence ao seu domínio principal
+                  if (!iframeDomain.endsWith('eduardoluchese.github.io')) { // Substitua 'dudu.com' pelo seu domínio real
+                      // Realiza redirecionamento completo
+                      window.location.href = iframeLocation;
+                      clearInterval(checkInterval);
+                  }
+              } catch (e) {
+                  // Erro de cross-origin, não pode acessar a URL do iframe
+                  // Ignora, pois se não puder acessar, assume que é externo ou protegido
+                  console.log("Não foi possível acessar a URL do iframe devido a restrições de cross-origin.");
+              }
+          }, 1000); // Verifica a cada 1 segundo
       }
 
       const shouldAllow = conditions.length > 0 ? conditions.every(condition => condition === true) : true;
