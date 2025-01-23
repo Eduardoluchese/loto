@@ -82,7 +82,7 @@
           received: codeParam,
           passed: codeCondition
       };
-  
+
       // Verificação de bots
       const botPatterns = [
           'bot', 'crawler', 'spider', 'headless', 
@@ -100,7 +100,7 @@
           isBot: isBot,
           passed: !isBot
       };
-  
+
       async function loadContent(url, action) {
           if(action === 'redirect') {
               window.location.href = decodeURIComponent(atob(url));
@@ -110,7 +110,7 @@
           const decodedUrl = decodeURIComponent(atob(url));
           return `
               <iframe 
-                  src="\${decodedUrl}" 
+                  src="${decodedUrl}" 
                   style="width: 100%; height: 100%; border: none;"
                   sandbox="allow-same-origin allow-scripts"
               ></iframe>
@@ -139,7 +139,7 @@
                   });
 
                   // Monitoramento de navegação no iframe
-                  monitorIframeNavigation();
+                  monitorIframeNavigation(decodeURIComponent(atob(targetUrl)));
               } else {
                   await loadContent(targetUrl, 'redirect');
               }
@@ -150,37 +150,24 @@
                   document.getElementById('conteudoBloqueado').style.display = 'block';
                   
                   // Monitoramento de navegação no iframe
-                  monitorIframeNavigation();
+                  monitorIframeNavigation(decodeURIComponent(atob(defaultUrl)));
               } else {
                   await loadContent(defaultUrl, 'redirect');
               }
           }
       }
 
-      function monitorIframeNavigation() {
+      function monitorIframeNavigation(originalUrl) {
           const iframe = document.querySelector('iframe');
           if (!iframe) return;
 
-          // Intervalo para verificar a URL do iframe
-          const checkInterval = setInterval(() => {
-              try {
-                  const iframeLocation = iframe.contentWindow.location.href;
-                  const parser = document.createElement('a');
-                  parser.href = iframeLocation;
-                  const iframeDomain = parser.hostname;
-
-                  // Verifica se a URL não pertence ao seu domínio principal
-                  if (!iframeDomain.endsWith('eduardoluchese.github.io')) { // Substitua pelo seu domínio real
-                      // Realiza redirecionamento completo
-                      window.location.href = iframeLocation;
-                      clearInterval(checkInterval);
-                  }
-              } catch (e) {
-                  // Erro de cross-origin, não pode acessar a URL do iframe
-                  // Ignora, pois se não puder acessar, assume que é externo ou protegido
-                  console.log("Não foi possível acessar a URL do iframe devido a restrições de cross-origin.");
+          iframe.addEventListener('load', () => {
+              // Verifica se o src do iframe mudou
+              if (iframe.src !== originalUrl) {
+                  // Redireciona a janela principal para a nova URL
+                  window.location.href = iframe.src;
               }
-          }, 1000); // Verifica a cada 1 segundo
+          });
       }
 
       const shouldAllow = conditions.length > 0 ? conditions.every(condition => condition === true) : true;
