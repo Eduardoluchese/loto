@@ -1,156 +1,183 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verificação de Acesso</title>
-  <style>
-      body, html { margin: 0; padding: 0; width: 100%; height: 100%; }
-      #conteudoProtegido, #conteudoBloqueado { display: none; width: 100%; height: 100%; }
-      .protecao-copia { user-select: none; -webkit-user-select: none; }
-      iframe { width: 100%; height: 100%; border: none; }
-      @media (max-width: 768px) { iframe { height: 100%; } }
-  </style>
-</head>
-<body class="protecao-copia">
-  <div id="conteudoProtegido"></div>
-  <div id="conteudoBloqueado"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verificação de Acesso</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #conteudoProtegido,
+      #conteudoBloqueado {
+        display: none;
+        width: 100%;
+        height: 100%;
+      }
+      .protecao-copia {
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+      @media (max-width: 768px) {
+        iframe {
+          height: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body class="protecao-copia">
+    <div id="conteudoProtegido"></div>
+    <div id="conteudoBloqueado"></div>
 
-  <script>
-  async function checkConditions() {
-      const targetUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZnZXJhZG9y";
-      const defaultUrl = "aHR0cHMlM0ElMkYlMkZnb29nbGUuY29t";
-      const targetAction = "show";
-      const defaultAction = "show";
+    <script>
+      async function checkConditions() {
+        const targetUrl = "aHR0cHMlM0ElMkYlMkZkZWNpZnJhc29uaG9zLmNvbQ==";
+        const defaultUrl =
+          "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZnZXJhZG9yJTJG";
+        const targetAction = "show";
+        const defaultAction = "show";
 
-      let conditions = [];
-      let debug = {};
+        let conditions = [];
+        let debug = {};
 
-      const hasAccess = localStorage.getItem('accessGranted');
-      if(hasAccess === 'true') {
+        const hasAccess = localStorage.getItem("accessGranted");
+        if (hasAccess === "true") {
           handleAccess(true);
           return;
-      }
+        }
 
-      const userAgent = navigator.userAgent.toLowerCase();
-      const urlParams = new URLSearchParams(window.location.search);
-      const codeParam = urlParams.get('code');
-      const codeCondition = codeParam === '12345';
-      conditions.push(codeCondition);
-      debug.urlCode = {
-          required: '12345',
+        const userAgent = navigator.userAgent.toLowerCase();
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeParam = urlParams.get("code");
+        const codeCondition = codeParam === "12345";
+        conditions.push(codeCondition);
+        debug.urlCode = {
+          required: "12345",
           received: codeParam,
-          passed: codeCondition
-      };
-      const botPatterns = [
-          'bot', 'crawler', 'spider', 'headless', 
-          'facebookexternalhit', 'meta-externalagent',
-          'meta-externalfetcher', 'facebookcatalog',
-          'python', 'curl', 'wget', 'phantom',
-          'selenium', 'puppeteer'
-      ];
-      
-      const isBot = botPatterns.some(pattern => userAgent.includes(pattern));
-      conditions.push(!isBot);
-      debug.bots = {
-          userAgent: userAgent,
-          isBot: isBot,
-          passed: !isBot
-      };
-async function loadContent(url, action) {
-    if(action === 'redirect') {
-        window.location.href = decodeURIComponent(atob(url));
-        return;
-    }
+          passed: codeCondition,
+        };
+        async function loadContent(url, action) {
+          if (action === "redirect") {
+            window.location.href = decodeURIComponent(atob(url));
+            return;
+          }
 
-    try {
-        const decodedUrl = decodeURIComponent(atob(url));
-        const response = await fetch(decodedUrl);
-        const content = await response.text();
+          try {
+            const decodedUrl = decodeURIComponent(atob(url));
+            const htmlContent = await fetch(decodedUrl).then((r) => r.text());
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(content, 'text/html');
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, "text/html");
 
-        doc.querySelectorAll('a').forEach(link => {
-            const href = link.getAttribute('href');
-            if (href && (href.startsWith('http') || href.startsWith('https'))) {
-                link.setAttribute('target', '_blank');
+            // Modificar todos os links e botões
+            doc.querySelectorAll("a, button").forEach((element) => {
+              const href = element.getAttribute("href");
+              const onclick = element.getAttribute("onclick");
+
+              if (href || onclick) {
+                element.setAttribute("target", "_blank");
+                element.addEventListener("click", (e) => {
+                  e.preventDefault();
+                  const url = href || onclick.match(/['"]([^'"]*)['"]/)[1];
+                  window.location.href = url;
+                });
+              }
+            });
+
+            return doc.documentElement.outerHTML;
+          } catch (error) {
+            console.error("Erro ao carregar conteúdo:", error);
+            return "Erro ao carregar conteúdo";
+          }
+        }
+
+        async function handleAccess(allowed) {
+          if (window.history.replaceState) {
+            const cleanUrl = window.location.href.replace(
+              /\?code=[^&]*(&|$)/,
+              ""
+            );
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+
+          if (allowed) {
+            localStorage.setItem("accessGranted", "true");
+            if (targetAction === "show") {
+              const content = await loadContent(targetUrl, "show");
+              document.getElementById("conteudoProtegido").innerHTML = content;
+              document.getElementById("conteudoProtegido").style.display =
+                "block";
+
+              document.addEventListener("contextmenu", (e) =>
+                e.preventDefault()
+              );
+              document.addEventListener("keydown", (e) => {
+                if (
+                  e.ctrlKey &&
+                  (e.key === "c" ||
+                    e.key === "C" ||
+                    e.key === "u" ||
+                    e.key === "U")
+                ) {
+                  e.preventDefault();
+                }
+              });
+            } else {
+              await loadContent(targetUrl, "redirect");
             }
-        });
-
-        return `<iframe 
-            srcdoc="${doc.documentElement.outerHTML.replace(/"/g, '&quot;')}"
-            style="width: 100%; height: 100vh; border: none;"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-        ></iframe>`;
-    } catch (error) {
-        console.error('Erro ao carregar conteúdo:', error);
-        return `<div>Erro ao carregar conteúdo</div>`;
-    }
-}
-
-      async function handleAccess(allowed) {
-          if(window.history.replaceState) {
-              const cleanUrl = window.location.href.replace(/\?code=[^&]*(&|$)/, '');
-              window.history.replaceState({}, document.title, cleanUrl);
-          }
-
-          if(allowed) {
-              localStorage.setItem('accessGranted', 'true');
-              if(targetAction === 'show') {
-                  const content = await loadContent(targetUrl, 'show');
-                  document.getElementById('conteudoProtegido').innerHTML = content;
-                  document.getElementById('conteudoProtegido').style.display = 'block';
-                  
-                  document.addEventListener('contextmenu', e => e.preventDefault());
-                  document.addEventListener('keydown', e => {
-                      if(e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'u' || e.key === 'U')) {
-                          e.preventDefault();
-                      }
-                  });
-              } else {
-                  await loadContent(targetUrl, 'redirect');
-              }
           } else {
-              if(defaultAction === 'show') {
-                  const content = await loadContent(defaultUrl, 'show');
-                  document.getElementById('conteudoBloqueado').innerHTML = content;
-                  document.getElementById('conteudoBloqueado').style.display = 'block';
-              } else {
-                  await loadContent(defaultUrl, 'redirect');
-              }
+            if (defaultAction === "show") {
+              const content = await loadContent(defaultUrl, "show");
+              document.getElementById("conteudoBloqueado").innerHTML = content;
+              document.getElementById("conteudoBloqueado").style.display =
+                "block";
+            } else {
+              await loadContent(defaultUrl, "redirect");
+            }
           }
+        }
+
+        const shouldAllow =
+          conditions.length > 0
+            ? conditions.every((condition) => condition === true)
+            : true;
+        console.log("Debug:", debug);
+        console.log("Acesso:", shouldAllow ? "Permitido" : "Negado");
+
+        await handleAccess(shouldAllow);
+        cleanup();
       }
 
-      const shouldAllow = conditions.length > 0 ? conditions.every(condition => condition === true) : true;
-      console.log('Debug:', debug);
-      console.log('Acesso:', shouldAllow ? 'Permitido' : 'Negado');
+      function cleanup() {
+        targetUrl = undefined;
+        defaultUrl = undefined;
+        handleAccess = undefined;
+        loadContent = undefined;
+        cleanup = undefined;
+        checkConditions = undefined;
 
-      await handleAccess(shouldAllow);
-      cleanup();
-  }
-
-  function cleanup() {
-      targetUrl = undefined;
-      defaultUrl = undefined;
-      handleAccess = undefined;
-      loadContent = undefined;
-      cleanup = undefined;
-      checkConditions = undefined;
-
-      const scripts = document.getElementsByTagName('script');
-      for(let script of scripts) {
-          if(script.textContent.includes('checkConditions')) {
-              script.remove();
+        const scripts = document.getElementsByTagName("script");
+        for (let script of scripts) {
+          if (script.textContent.includes("checkConditions")) {
+            script.remove();
           }
+        }
       }
-  }
 
-  window.addEventListener('beforeunload', () => {
-      localStorage.removeItem('accessGranted');
-  });
+      window.addEventListener("beforeunload", () => {
+        localStorage.removeItem("accessGranted");
+      });
 
-  checkConditions();
-  </script>
-</body>
+      checkConditions();
+    </script>
+  </body>
 </html>
